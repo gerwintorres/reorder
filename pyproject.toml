@@ -1,7 +1,7 @@
 [project]
 name = "reorder"
 version = "0.1.0"
-description = "Add your description here"
+description = "Weekly demand estimation per product from sales history, with the rule and inputs behind each estimate."
 readme = "README.md"
 authors = [
     { name = "gerwintorres", email = "ger.lamto@gmail.com" }
