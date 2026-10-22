@@ -5,10 +5,20 @@ from collections.abc import Sequence
 
 MIN_REPEATS = 2
 REPEAT_SHARE = 0.05
+MIN_VALUES_TO_FILTER = 4
+MIN_VALUES_AFTER_FILTER = 3
+MIN_VALUES_FOR_STD = 2
 
 
 def quartiles(values: Sequence[int]) -> tuple[float, float]:
-    """Return Q1 and Q3 with linear interpolation, as NumPy and pandas do."""
+    """Return Q1 and Q3 with linear interpolation, as NumPy and pandas do.
+
+    O(n log n): statistics.quantiles sorts a copy of the values. Every
+    function below that calls this one has the same cost.
+
+    Raises:
+        StatisticsError: If there are fewer than two values.
+    """
     q1, _, q3 = statistics.quantiles(values, n=4, method="inclusive")
     return q1, q3
 
@@ -27,13 +37,23 @@ def repeated_value(values: Sequence[int], threshold: int) -> int:
 
 
 def ceiling(values: Sequence[int]) -> float:
-    """Return Q3 + IQR, raised to the highest repeated value if that is higher."""
+    """Return Q3 + IQR, raised to the highest repeated value if that is higher.
+
+    Raises:
+        StatisticsError: If there are fewer than two values.
+    """
     q1, q3 = quartiles(values)
     return max(q3 + (q3 - q1), repeated_value(values, min_count(len(values))))
 
 
 def split_peaks(values: Sequence[int]) -> tuple[list[int], list[int]]:
-    """Split values into (kept, excluded); a peak is both high and rare."""
+    """Split values into (kept, excluded); a peak is both high and rare.
+
+    Nothing is excluded when there are fewer than four values, or when
+    filtering would leave fewer than three.
+    """
+    if len(values) < MIN_VALUES_TO_FILTER:
+        return list(values), []
     top = ceiling(values)
     threshold = min_count(len(values))
     counts = Counter(values)
@@ -44,10 +64,17 @@ def split_peaks(values: Sequence[int]) -> tuple[list[int], list[int]]:
             excluded.append(value)
         else:
             kept.append(value)
+    if len(kept) < MIN_VALUES_AFTER_FILTER:
+        return list(values), []
     return kept, excluded
 
 
 def filtered_std(values: Sequence[int]) -> float:
-    """Return the sample standard deviation of the values left after split_peaks."""
+    """Return the sample standard deviation of the values left after split_peaks.
+
+    Returns 0.0 when fewer than two values are left.
+    """
     kept, _ = split_peaks(values)
+    if len(kept) < MIN_VALUES_FOR_STD:
+        return 0.0
     return statistics.stdev(kept)
