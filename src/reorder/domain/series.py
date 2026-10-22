@@ -5,7 +5,11 @@ from datetime import date
 
 @dataclass(frozen=True)
 class WeeklyPoint:
-    """Units sold in one week, keyed by the Monday that starts it."""
+    """Units sold in one week, keyed by the Monday that starts it.
+
+    Raises:
+        ValueError: If week_start is not a Monday, or qty is negative or a bool.
+    """
 
     week_start: date
     qty: int
@@ -19,7 +23,11 @@ class WeeklyPoint:
 
 @dataclass(frozen=True)
 class ProductHistory:
-    """Weekly sales of one product plus the dates the recency rules need."""
+    """Weekly sales of one product plus the dates the recency rules need.
+
+    Raises:
+        ValueError: If sku is blank.
+    """
 
     sku: str
     points: tuple[WeeklyPoint, ...]

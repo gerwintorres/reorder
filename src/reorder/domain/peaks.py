@@ -11,7 +11,14 @@ MIN_VALUES_FOR_STD = 2
 
 
 def quartiles(values: Sequence[int]) -> tuple[float, float]:
-    """Return Q1 and Q3 with linear interpolation, as NumPy and pandas do."""
+    """Return Q1 and Q3 with linear interpolation, as NumPy and pandas do.
+
+    O(n log n): statistics.quantiles sorts a copy of the values. Every
+    function below that calls this one has the same cost.
+
+    Raises:
+        StatisticsError: If there are fewer than two values.
+    """
     q1, _, q3 = statistics.quantiles(values, n=4, method="inclusive")
     return q1, q3
 
@@ -30,7 +37,11 @@ def repeated_value(values: Sequence[int], threshold: int) -> int:
 
 
 def ceiling(values: Sequence[int]) -> float:
-    """Return Q3 + IQR, raised to the highest repeated value if that is higher."""
+    """Return Q3 + IQR, raised to the highest repeated value if that is higher.
+
+    Raises:
+        StatisticsError: If there are fewer than two values.
+    """
     q1, q3 = quartiles(values)
     return max(q3 + (q3 - q1), repeated_value(values, min_count(len(values))))
 
