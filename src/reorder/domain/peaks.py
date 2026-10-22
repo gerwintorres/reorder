@@ -5,6 +5,9 @@ from collections.abc import Sequence
 
 MIN_REPEATS = 2
 REPEAT_SHARE = 0.05
+MIN_VALUES_TO_FILTER = 4
+MIN_VALUES_AFTER_FILTER = 3
+MIN_VALUES_FOR_STD = 2
 
 
 def quartiles(values: Sequence[int]) -> tuple[float, float]:
@@ -33,7 +36,13 @@ def ceiling(values: Sequence[int]) -> float:
 
 
 def split_peaks(values: Sequence[int]) -> tuple[list[int], list[int]]:
-    """Split values into (kept, excluded); a peak is both high and rare."""
+    """Split values into (kept, excluded); a peak is both high and rare.
+
+    Nothing is excluded when there are fewer than four values, or when
+    filtering would leave fewer than three.
+    """
+    if len(values) < MIN_VALUES_TO_FILTER:
+        return list(values), []
     top = ceiling(values)
     threshold = min_count(len(values))
     counts = Counter(values)
@@ -44,10 +53,17 @@ def split_peaks(values: Sequence[int]) -> tuple[list[int], list[int]]:
             excluded.append(value)
         else:
             kept.append(value)
+    if len(kept) < MIN_VALUES_AFTER_FILTER:
+        return list(values), []
     return kept, excluded
 
 
 def filtered_std(values: Sequence[int]) -> float:
-    """Return the sample standard deviation of the values left after split_peaks."""
+    """Return the sample standard deviation of the values left after split_peaks.
+
+    Returns 0.0 when fewer than two values are left.
+    """
     kept, _ = split_peaks(values)
+    if len(kept) < MIN_VALUES_FOR_STD:
+        return 0.0
     return statistics.stdev(kept)
