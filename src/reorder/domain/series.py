@@ -1,6 +1,8 @@
 from calendar import MONDAY
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
+
+DEFAULT_WINDOW_WEEKS = 52
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,20 @@ class ProductHistory:
             raise ValueError(f"sku must not be blank, got {self.sku!r}")
 
 
-def positive_qtys(history: ProductHistory) -> list[int]:
-    """Return the quantities of the weeks with sales; zero weeks don't count."""
-    return [point.qty for point in history.points if point.qty > 0]
+def weeks_with_sales(
+    history: ProductHistory, cutoff: date, window_weeks: int = DEFAULT_WINDOW_WEEKS
+) -> list[WeeklyPoint]:
+    """Return the weeks with sales in the window before cutoff, oldest first.
+
+    The window starts window_weeks weeks before cutoff. A week starting on
+    cutoff or later is outside it, and weeks with qty 0 don't count.
+    """
+    start = cutoff - timedelta(weeks=window_weeks)
+    return sorted(
+        (
+            point
+            for point in history.points
+            if start <= point.week_start < cutoff and point.qty > 0
+        ),
+        key=lambda point: point.week_start,
+    )
