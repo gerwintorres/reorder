@@ -21,7 +21,7 @@ from reorder.domain.service_level import SERVICE_LEVEL_TARGETS, k_for
         (AbcClass.C, Rotation.LOW, 0.13),
     ],
 )
-def test_k_for_matches_spec_table(
+def test_k_for_matches_service_level_table(
     abc: AbcClass, rotation: Rotation, expected: float
 ) -> None:
     # Exact comparison: k_for rounds to two decimals.
