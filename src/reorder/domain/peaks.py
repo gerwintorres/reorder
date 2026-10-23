@@ -24,7 +24,11 @@ def quartiles(values: Sequence[int]) -> tuple[float, float]:
 
 
 def min_count(n: int) -> int:
-    """Return how many times a value must appear to count as real demand."""
+    """Return how many times a value must appear to count as real demand.
+
+    Args:
+        n: Number of values in the series.
+    """
     return max(MIN_REPEATS, math.ceil(n * REPEAT_SHARE))
 
 
