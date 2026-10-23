@@ -3,27 +3,59 @@ from datetime import date, timedelta
 
 import pytest
 
-from reorder.domain.series import ProductHistory, WeeklyPoint, positive_qtys
+from reorder.domain.series import ProductHistory, WeeklyPoint, weeks_with_sales
 
 MONDAY = date(2026, 6, 29)
 
 
-def make_history(*qtys: int) -> ProductHistory:
-    points = tuple(
-        WeeklyPoint(week_start=MONDAY + timedelta(weeks=i), qty=qty)
-        for i, qty in enumerate(qtys)
-    )
+CUTOFF = MONDAY
+
+
+def make_history(*points: tuple[date, int]) -> ProductHistory:
     return ProductHistory(
-        sku="A-100", points=points, last_sale_date=None, last_purchase_date=None
+        sku="A-100",
+        points=tuple(WeeklyPoint(week_start=d, qty=q) for d, q in points),
+        last_sale_date=None,
+        last_purchase_date=None,
     )
 
 
-def test_positive_qtys_skips_zero_quantity_weeks() -> None:
-    assert positive_qtys(make_history(4, 0, 12, 0, 20)) == [4, 12, 20]
+def weeks_before_cutoff(weeks: int) -> date:
+    return CUTOFF - timedelta(weeks=weeks)
 
 
-def test_positive_qtys_of_empty_history_is_empty() -> None:
-    assert positive_qtys(make_history()) == []
+def test_weeks_with_sales_skips_zero_quantity_weeks() -> None:
+    history = make_history((weeks_before_cutoff(2), 4), (weeks_before_cutoff(1), 0))
+    assert [w.qty for w in weeks_with_sales(history, CUTOFF)] == [4]
+
+
+def test_weeks_with_sales_of_empty_history_is_empty() -> None:
+    assert weeks_with_sales(make_history(), CUTOFF) == []
+
+
+def test_weeks_with_sales_includes_first_week_of_window() -> None:
+    history = make_history((weeks_before_cutoff(52), 4))
+    assert len(weeks_with_sales(history, CUTOFF)) == 1
+
+
+def test_weeks_with_sales_excludes_week_before_window() -> None:
+    history = make_history((weeks_before_cutoff(53), 4))
+    assert weeks_with_sales(history, CUTOFF) == []
+
+
+def test_weeks_with_sales_excludes_week_starting_on_cutoff() -> None:
+    history = make_history((CUTOFF, 4))
+    assert weeks_with_sales(history, CUTOFF) == []
+
+
+def test_weeks_with_sales_sorts_oldest_first() -> None:
+    history = make_history((weeks_before_cutoff(1), 8), (weeks_before_cutoff(3), 4))
+    assert [w.qty for w in weeks_with_sales(history, CUTOFF)] == [4, 8]
+
+
+def test_weeks_with_sales_uses_custom_window() -> None:
+    history = make_history((weeks_before_cutoff(5), 4), (weeks_before_cutoff(4), 8))
+    assert [w.qty for w in weeks_with_sales(history, CUTOFF, window_weeks=4)] == [8]
 
 
 def test_weekly_point_accepts_zero_qty() -> None:
