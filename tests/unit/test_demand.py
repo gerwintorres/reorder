@@ -9,6 +9,7 @@ from reorder.domain.demand import (
     Rule,
     average,
     base_demand,
+    efficiency,
     estimate_demand,
 )
 from reorder.domain.rotation import Rotation
@@ -73,6 +74,25 @@ def test_base_demand_rounds_up() -> None:
     assert base_demand(10.01, 1.64, 0.0) == 11
 
 
+def test_efficiency_of_golden_case() -> None:
+    # 10 of the 13 weeks sold 37 units or less.
+    assert efficiency(GOLDEN, 37) == pytest.approx(0.769, abs=0.005)
+
+
+def test_efficiency_counts_weeks_equal_to_demand() -> None:
+    assert efficiency([5, 10], 5) == 0.5
+
+
+def test_efficiency_of_no_weeks_is_zero() -> None:
+    assert efficiency([], 10) == 0.0
+
+
+def test_efficiency_uses_the_final_demand() -> None:
+    # The base is 37, but a stale last sale sets the demand to 0.
+    result = estimate(make_history(consecutive(GOLDEN), last_sale_days=91))
+    assert result.efficiency == 0.0
+
+
 def test_golden_case_uses_statistical_base() -> None:
     assert GOLDEN_ESTIMATE.rule is Rule.STATISTICAL_BASE
 
@@ -92,6 +112,7 @@ def test_golden_case_reason_shows_average_k_and_std() -> None:
         ("std", 7.254),
         ("k", 1.64),
         ("base_demand", 37),
+        ("efficiency", 0.769),
         ("q1", 12),
         ("q3", 24),
         ("ceiling", 36),
