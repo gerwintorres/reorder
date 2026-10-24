@@ -49,6 +49,7 @@ class DemandEstimate:
     std: float
     k: float
     base_demand: int
+    efficiency: float
     q1: float | None
     q3: float | None
     ceiling: float | None
@@ -63,6 +64,19 @@ def average(qtys: Sequence[int]) -> float:
 def base_demand(avg: float, k: float, std: float) -> int:
     """Return the demand before recency rules: avg + k * std, rounded up."""
     return math.ceil(avg + k * std)
+
+
+def efficiency(qtys: Sequence[int], demand: int) -> float:
+    """Return the share of weeks with sales that the demand would have covered.
+
+    It is measured on the same weeks the demand was estimated from, so it
+    describes the history, not how well the demand will cover future weeks.
+    Returns 0.0 when there are no weeks.
+    """
+    if not qtys:
+        return 0.0
+    covered = sum(1 for qty in qtys if qty <= demand)
+    return covered / len(qtys)
 
 
 def estimate_demand(
@@ -89,6 +103,7 @@ def estimate_demand(
         std=std,
         k=k,
         base_demand=base,
+        efficiency=efficiency(qtys, demand),
         q1=q1,
         q3=q3,
         ceiling=ceiling(qtys) if filtered else None,
