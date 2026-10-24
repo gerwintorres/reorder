@@ -13,3 +13,7 @@ wheels/
 *.sqlite
 .DS_Store
 
+
+# Test coverage
+.coverage
+htmlcov/
