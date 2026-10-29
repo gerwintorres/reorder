@@ -7,4 +7,7 @@ lint:
 typecheck:
 	uv run mypy
 
-.PHONY: test lint typecheck
+.PHONY: test lint typecheck run
+
+run:
+	uv run uvicorn reorder.api.main:app --reload
