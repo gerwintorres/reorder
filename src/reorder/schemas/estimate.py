@@ -1,7 +1,10 @@
+from calendar import MONDAY
 from dataclasses import asdict
 from datetime import date
+from itertools import pairwise
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from pydantic_core import PydanticCustomError
 
 from reorder.domain.classification import AbcClass
 from reorder.domain.demand import DemandEstimate, Rule
@@ -37,6 +40,13 @@ class WeeklyPointIn(BaseModel):
     week_start: date
     qty: int = Field(ge=0, strict=True)
 
+    @field_validator("week_start")
+    @classmethod
+    def week_starts_on_monday(cls, value: date) -> date:
+        if value.weekday() != MONDAY:
+            raise PydanticCustomError("not_monday", "Week must start on a Monday")
+        return value
+
 
 class EstimatePreviewIn(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [PREVIEW_EXAMPLE]})
@@ -48,6 +58,31 @@ class EstimatePreviewIn(BaseModel):
     last_sale_date: date | None = None
     last_purchase_date: date | None = None
     cutoff_date: date
+
+    @field_validator("sku")
+    @classmethod
+    def sku_is_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise PydanticCustomError("blank", "SKU must not be blank")
+        return value
+
+    @field_validator("points")
+    @classmethod
+    def weeks_are_sorted_and_unique(
+        cls, points: list[WeeklyPointIn]
+    ) -> list[WeeklyPointIn]:
+        for previous, current in pairwise(points):
+            if current.week_start == previous.week_start:
+                raise PydanticCustomError(
+                    "repeated_week",
+                    "Week {week} appears more than once",
+                    {"week": current.week_start.isoformat()},
+                )
+            if current.week_start < previous.week_start:
+                raise PydanticCustomError(
+                    "unsorted_weeks", "Weeks must be in ascending order"
+                )
+        return points
 
     def to_history(self) -> ProductHistory:
         """Build the domain history from the request."""

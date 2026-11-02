@@ -85,3 +85,45 @@ def test_preview_accepts_missing_optional_dates() -> None:
     payload = golden_payload()
     del payload["last_purchase_date"]
     assert client.post(URL, json=payload).status_code == 200
+
+
+def errors_for(**overrides: Any) -> list[dict[str, str]]:
+    response = client.post(URL, json=golden_payload(**overrides))
+    assert response.status_code == 422
+    errors: list[dict[str, str]] = response.json()["errors"]
+    return errors
+
+
+def test_preview_rejects_repeated_weeks() -> None:
+    week = {"week_start": "2026-06-22", "qty": 4}
+    assert errors_for(points=[week, week]) == [
+        {"field": "points", "message": "Week 2026-06-22 appears more than once"}
+    ]
+
+
+def test_preview_rejects_weeks_out_of_order() -> None:
+    points = [
+        {"week_start": "2026-06-22", "qty": 4},
+        {"week_start": "2026-06-15", "qty": 4},
+    ]
+    assert errors_for(points=points) == [
+        {"field": "points", "message": "Weeks must be in ascending order"}
+    ]
+
+
+def test_preview_rejects_week_that_does_not_start_on_monday() -> None:
+    points = [{"week_start": "2026-06-24", "qty": 4}]
+    assert errors_for(points=points) == [
+        {"field": "points.0.week_start", "message": "Week must start on a Monday"}
+    ]
+
+
+def test_preview_reports_negative_qty_on_its_point() -> None:
+    points = [{"week_start": "2026-06-22", "qty": -1}]
+    assert [e["field"] for e in errors_for(points=points)] == ["points.0.qty"]
+
+
+def test_preview_rejects_blank_sku() -> None:
+    assert errors_for(sku="   ") == [
+        {"field": "sku", "message": "SKU must not be blank"}
+    ]
