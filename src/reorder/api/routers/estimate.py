@@ -1,9 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 from reorder.domain.demand import estimate_demand
+from reorder.schemas.errors import ErrorsOut
 from reorder.schemas.estimate import EstimatePreviewIn, EstimatePreviewOut
 
-router = APIRouter(tags=["estimate"])
+router = APIRouter(
+    tags=["estimate"],
+    responses={status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorsOut}},
+)
 
 
 @router.post("/estimate/preview")
