@@ -1,0 +1,19 @@
+# Local environments and secrets
+.venv
+.venv.nosync
+.env
+
+# Caches and build output
+__pycache__/
+*.py[oc]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+
+# Not needed to run the app
+.git
+tests/
+.DS_Store
