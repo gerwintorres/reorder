@@ -1,0 +1,15 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/apps/reorder:latest
+      - .
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/apps/reorder:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
