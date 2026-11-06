@@ -6,10 +6,13 @@ class Settings(BaseSettings):
     """Runtime settings, read from environment variables and an optional .env.
 
     App settings use the REORDER_ prefix. PORT is read without it, because
-    hosting platforms set that name.
+    hosting platforms set that name. Other variables in .env belong to other
+    tools, such as Docker Compose, and are ignored.
     """
 
-    model_config = SettingsConfigDict(env_prefix="REORDER_", env_file=".env")
+    model_config = SettingsConfigDict(
+        env_prefix="REORDER_", env_file=".env", extra="ignore"
+    )
 
     host: str = "127.0.0.1"
     port: int = Field(

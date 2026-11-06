@@ -3,7 +3,7 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: reorder
-      POSTGRES_PASSWORD: reorder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
       POSTGRES_DB: reorder
     ports:
       - "127.0.0.1:5432:5432"
