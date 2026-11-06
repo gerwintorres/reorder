@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      # Local development only; production credentials never live in this file.
+      POSTGRES_USER: reorder
+      POSTGRES_PASSWORD: reorder
+      POSTGRES_DB: reorder
+    ports:
+      # Reachable from this machine only, not from the local network.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # -h localhost uses TCP: during first-time setup Postgres runs a temporary
+      # server on its Unix socket only, and that must not count as ready.
+      test: ["CMD", "pg_isready", "-h", "localhost", "-U", "reorder", "-d", "reorder"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db_data:
