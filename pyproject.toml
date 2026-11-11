@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.1",
     "fastapi>=0.162.0",
     "psycopg[binary]>=3.3.8",
     "pydantic-settings>=2.16.2",
@@ -34,6 +35,10 @@ testpaths = ["tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "A", "BLE"]
+
+[tool.ruff.lint.isort]
+# The migrations folder is also named alembic; this is the installed package.
+known-third-party = ["alembic"]
 
 [tool.mypy]
 files = ["src"]
