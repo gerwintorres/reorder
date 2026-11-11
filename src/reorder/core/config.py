@@ -33,3 +33,5 @@ class DatabaseSettings(BaseSettings):
     model_config = ENV_CONFIG
 
     database_url: SecretStr
+    # Logs every SQL statement with its parameters: for debugging only.
+    database_echo: bool = False
