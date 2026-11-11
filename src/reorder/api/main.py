@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
-from reorder.api.errors import validation_error_handler
-from reorder.api.routers import estimate
+from reorder.api.errors import ApiError, api_error_handler, validation_error_handler
+from reorder.api.routers import estimate, products
 
 app = FastAPI(
-    exception_handlers={RequestValidationError: validation_error_handler},
+    exception_handlers={
+        RequestValidationError: validation_error_handler,
+        ApiError: api_error_handler,
+    },
 )
 app.include_router(estimate.router, prefix="/api/v1")
+app.include_router(products.router, prefix="/api/v1")
 
 
 @app.get("/health")
