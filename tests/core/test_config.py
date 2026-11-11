@@ -15,6 +15,7 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Non
         "REORDER_PORT",
         "REORDER_HOST",
         "REORDER_DATABASE_URL",
+        "REORDER_DATABASE_ECHO",
         "POSTGRES_PASSWORD",
     ):
         monkeypatch.delenv(name, raising=False)
@@ -98,3 +99,14 @@ def test_database_password_stays_out_of_the_settings_repr(
         "REORDER_DATABASE_URL", "postgresql+psycopg://app:fake-password@db.internal/app"
     )
     assert "fake-password" not in repr(DatabaseSettings())
+
+
+def test_sql_echo_is_off_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REORDER_DATABASE_URL", "postgresql+psycopg://db/app")
+    assert DatabaseSettings().database_echo is False
+
+
+def test_reads_sql_echo_with_app_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REORDER_DATABASE_URL", "postgresql+psycopg://db/app")
+    monkeypatch.setenv("REORDER_DATABASE_ECHO", "true")
+    assert DatabaseSettings().database_echo is True
