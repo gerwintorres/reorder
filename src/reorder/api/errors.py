@@ -8,6 +8,22 @@ from fastapi.responses import JSONResponse
 from reorder.schemas.errors import ErrorItem, ErrorsOut
 
 
+class ApiError(Exception):
+    """An error reported to the client in the API error format."""
+
+    def __init__(self, status_code: int, field: str, message: str):
+        super().__init__(message)
+        self.status_code = status_code
+        self.field = field
+        self.message = message
+
+
+async def api_error_handler(request: Request, exc: ApiError) -> JSONResponse:
+    """Return an ApiError as {"errors": [{"field", "message"}]}."""
+    errors = ErrorsOut(errors=[ErrorItem(field=exc.field, message=exc.message)])
+    return JSONResponse(status_code=exc.status_code, content=errors.model_dump())
+
+
 async def validation_error_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
