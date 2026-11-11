@@ -35,6 +35,11 @@ def test_reads_values_from_env_file(tmp_path: Path) -> None:
     assert Settings().port == 8123
 
 
+def test_ignores_variables_meant_for_other_tools_in_env_file(tmp_path: Path) -> None:
+    (tmp_path / ".env").write_text("POSTGRES_PASSWORD=change-me\nPORT=8123\n")
+    assert Settings().port == 8123
+
+
 def test_environment_variable_wins_over_env_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
